@@ -1,0 +1,95 @@
+
+===========================
+MUTUAL FUND BOT - SUMMARY REPORT
+===========================
+
+📁 OVERVIEW
+-----------
+This project is a modular, microservice-driven mutual fund assistant that uses a combination of NLP and REST APIs to classify user intents and extract financial entities. Based on the extracted intent and entities, it can redirect users or perform specific backend operations like SIP creation.
+
+Key Technologies:
+- FastAPI (Backend + Microservice)
+- Hugging Face Transformers (BERT-based Intent and Entity Classification)
+- MySQL (Database Storage)
+- HTML + JavaScript (Frontend)
+- JWT Authentication
+
+📂 PROJECT STRUCTURE
+--------------------
+- Fast_Api_/: Main backend server (port 8001)
+  - Handles authentication, entity & intent detection, and routing
+  - Calls sip-creation microservice if intent = "create_sip"
+  - Manages database via SQLAlchemy
+
+- sip_service/: Microservice (port 8002)
+  - Dedicated to SIP creation
+  - Contains independent DB model + connection
+  - Logs SIP transactions separately
+
+- Mutual_fund_intent_entity/:
+  - Training scripts and test files for BERT-based intent/NER
+  - Mapping files (intent2id, entity2id, etc.)
+  - Final models used by predictor_utils.py
+
+- frontend/ (port 8000):
+  - analyze.html: Input UI for text query
+  - login.html/register.html: User auth pages
+  - Displays prediction OR forwards to microservice
+
+📌 KEY ROUTES
+-------------
+- POST /analyze-text
+  - Returns intent + entity or routes to /sip-creation based on intent
+
+- POST /sip-creation (microservice)
+  - Parses incoming payload
+  - Validates and stores SIP into MySQL if all entities are present
+
+📊 DATABASE STRUCTURE
+---------------------
+- Tables:
+  - users (via auth_user_schema.sql)
+  - sip_details (via sip_schema.sql)
+
+- Separate database initializations for:
+  - backend (Fast_Api_/database/)
+  - microservice (sip_service/database/)
+
+🧠 NLP INTEGRATION
+------------------
+- Trained using Hugging Face transformers
+- intent_training_script.py and ner_training_script.py prepare models
+- test_*.py scripts allow manual CLI testing
+- predictor_utils.py bridges models with FastAPI
+
+🔐 AUTHENTICATION
+-----------------
+- JWT based system
+- Access and refresh tokens
+- Routes are protected using `Depends(get_current_user)`
+
+🪵 LOGGING
+----------
+- Centralized logging to app.log
+- Includes info-level entries like intent detection, SIP creation
+
+⚠️ ERROR HANDLING
+-----------------
+- All exceptions are caught and returned as 500s in JSON format
+- HTTPStatusError from microservice requests are logged
+
+🚀 DEPLOYMENT NOTES
+-------------------
+- Three servers must run simultaneously:
+  - 8000: Frontend (`python3 -m http.server 8000` or Flask/Node for production)
+  - 8001: Backend (FastAPI main.py)
+  - 8002: SIP Microservice (FastAPI sip_main.py)
+- Recommend Dockerizing each independently in production
+
+📌 RECOMMENDED IMPROVEMENTS
+---------------------------
+- Add frontend display for SIP dashboard
+- Validate entities like dates with regex
+- Improve NER for financial expressions
+- Add unit tests and CI/CD hooks
+

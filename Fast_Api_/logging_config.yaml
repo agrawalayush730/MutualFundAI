@@ -1,0 +1,27 @@
+
+version: 1 #establishing the version (required)
+disable_existing_loggers: False #allowing third party access ( fastapi, Uvicorn)
+
+formatters:
+  standard:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"  #timestamp, logger name, Debug info, output message respectively
+
+handlers:
+  file_handler:
+    class: logging.handlers.RotatingFileHandler  #logs get stored as a file when it gets large new file is generated
+    level: DEBUG #logs everything from debug to error
+    formatter: standard #used for formating
+    filename: logs/app.log
+    maxBytes: 1048576  # 1MB
+    backupCount: 3
+    encoding: utf8
+
+loggers:
+  app_logger:
+    level: DEBUG
+    handlers: [file_handler] # logger send to file handler which writes to app.log
+    propagate: no #preventing duplication
+
+root:
+  level: INFO
+  handlers: [file_handler]

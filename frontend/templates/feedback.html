@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback</title>
+    <style>
+        body {
+            background-color: #f9fafb;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #1f2937;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #059669;
+        }
+
+        .error {
+            color: red;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        #responseText {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #logoutBtn {
+            background-color: #ef4444;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <button id="logoutBtn">Logout</button>
+        <h2>Feedback Form</h2>
+        <form id="feedbackForm">
+            <input type="text" id="name" placeholder="Your name" required />
+            <div id="nameError" class="error"></div>
+
+            <textarea id="message" rows="5" placeholder="Write your thoughts here..." required></textarea>
+            <div id="messageError" class="error"></div>
+
+            <button type="submit">Submit Feedback</button>
+            <p id="responseText"></p>
+        </form>
+    </div>
+
+    <script>
+        // 🔐 Immediately validate token on page load via server
+        (async function () {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                alert("Please login to access the feedback page.");
+                window.location.href = "/login";
+                return;
+            }
+           
+            try {
+                const res = await fetch("http://127.0.0.1:8001/verify-token/", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem("access_token");
+                    alert("Session expired. Please log in again.");
+                    window.location.href = "/login";
+                }
+            } catch (err) {
+                console.error("Token validation failed:", err);
+                alert("Could not verify session. Please login again.");
+                window.location.href = "/login";
+            } 
+        })(); 
+
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+            const token = localStorage.getItem("FastapiProject_jwt");
+            if (!token) {
+                window.location.href = "/login";
+                return;
+            }
+
+            try {
+                await fetch("http://127.0.0.1:8001/logout/", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+            } catch (err) {
+                console.warn("Logout failed but proceeding:", err);
+            }
+
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            window.location.href = "/login";
+        });
+
+        function validateFeedback(name, message) {
+            let isValid = true;
+            document.getElementById("nameError").innerText = "";
+            document.getElementById("messageError").innerText = "";
+
+            if (name.trim().length < 3) {
+                document.getElementById("nameError").innerText = "Name must be at least 3 characters long.";
+                isValid = false;
+            }
+
+            if (message.trim().length < 10) {
+                document.getElementById("messageError").innerText = "Feedback must be at least 10 characters long.";
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        async function postFeedback(name, message, token) 
+        {
+
+            try {
+                const response = await fetch('http://127.0.0.1:8001/feedback/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: name.trim(), message: message.trim() })
+                });
+
+                const result = await response.json();
+                
+              
+                 
+                
+                
+                if(response.status === 401 || response.status === 403) 
+                {
+                    responseText.innerText = "Access token was expired..reposting feedbackagain"
+                    const response1 = await fetch('http://127.0.0.1:8001/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.refresh_token}`
+                    },
+                    });
+                    const result1 = await response1.json();
+                    localStorage.setItem("access_token", result1.access_token);
+                    postFeedback(name, message, result1.access_token);
+
+                }
+                
+               else if(response.ok) {
+                    responseText.style.color = "green";
+                    responseText.innerText = result.message;
+                    form.reset();
+                } 
+                else {
+                    responseText.style.color = "red";
+                    responseText.innerText = result.detail || "❌ Submission failed.";
+                }
+
+
+            } catch (err) {
+                responseText.style.color = "red";
+                responseText.innerText = "⚠️ Server error.";
+                console.error(err);
+            }  
+        } 
+
+        const form = document.getElementById('feedbackForm');
+        const responseText = document.getElementById('responseText');
+
+        form.addEventListener('submit', async (e) => 
+        {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const message = document.getElementById('message').value;
+            const token = localStorage.getItem("access_token");
+
+            if (!validateFeedback(name, message)) return;
+            postFeedback(name,message,token);
+        });
+
+            
+        
+    </script>
+</body>
+</html>

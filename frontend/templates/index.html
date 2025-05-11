@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submit User Info</title>
+</head>
+<body>
+    <h2>User Info Form</h2>
+    <form id="userForm">
+        <label>Name: <input type="text" id="name" required></label><br><br>
+        <label>Age: <input type="number" id="age" required></label><br><br>
+        <button type="submit">Submit</button>
+    </form>
+    <p id="responseText"></p>
+
+    <script>
+        const form = document.getElementById('userForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+
+            const response = await fetch('http://127.0.0.1:8001/greet/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: name, age: parseInt(age) })
+            });
+
+            const result = await response.json();
+            document.getElementById('responseText').innerText = result.message;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Analyze Message</title>
+  <style>
+    body {
+      background-color: #f9fafb;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .form-container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      width: 400px;
+    }
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #1f2937;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    #responseText {
+      margin-top: 12px;
+      font-weight: bold;
+      font-size: 15px;
+      white-space: pre-line;
+    }
+    #logoutBtn {
+      background-color: #ef4444;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="form-container">
+  <button id="logoutBtn">Logout</button>
+  <h2>Analyze Message</h2>
+  <form id="analyzeForm">
+    <textarea id="textInput" rows="5" placeholder="Enter your message here..." required></textarea>
+    <button type="submit">Analyze</button>
+    <p id="responseText"></p>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById("analyzeForm");
+  const responseText = document.getElementById("responseText");
+
+  const fetchAnalysis = async (text, token) => {
+  try {
+    const res = await fetch("http://127.0.0.1:8001/analyze-text", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ text })
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      // Attempt refresh
+      const refreshRes = await fetch("http://127.0.0.1:8001/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("refresh_token")}`
+        }
+      });
+
+      if (!refreshRes.ok) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const newToken = await refreshRes.json();
+      localStorage.setItem("access_token", newToken.access_token);
+      return fetchAnalysis(text, newToken.access_token); // Retry
+    }
+
+    const data = await res.json();
+
+    if (res.ok) {
+      let output = "";
+
+      if (data.intent && data.entities) {
+        output = `🔍 Intent:\n- ${data.intent.label} (${(data.intent.confidence * 100).toFixed(2)}%)`;
+        if (data.entities.length === 0) {
+          output += `\n- None found`;
+        } else {
+          data.entities.forEach(ent => {
+            output += `\n- [${ent.entity}] ${ent.text}`;
+          });
+        }
+      } else if (data.status && data.message) {
+        output = `✅ ${data.message}`;
+      } else {
+        output = "⚠️ Unknown response format.";
+      }
+
+      responseText.style.color = "green";
+      responseText.innerText = output;
+    } else {
+      responseText.style.color = "red";
+      responseText.innerText = data.detail || "❌ Error analyzing text.";
+    }
+  } catch (err) {
+    console.error(err);
+    responseText.style.color = "red";
+    responseText.innerText = "⚠️ Server error.";
+  }
+};
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = document.getElementById("textInput").value;
+    const token = localStorage.getItem("access_token");
+    responseText.innerText = "⏳ Analyzing...";
+    await fetchAnalysis(text, token);
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    window.location.href = "/login";
+  });
+
+  // Immediate token check on page load
+  (async function () {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      alert("Please login to access this page.");
+      window.location.href = "/login";
+      return;
+    }
+
+    const res = await fetch("http://127.0.0.1:8001/verify-token/", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem("access_token");
+      alert("Session expired. Please log in again.");
+      window.location.href = "/login";
+    }
+    
+  })();
+</script>
+</body>
+</html>

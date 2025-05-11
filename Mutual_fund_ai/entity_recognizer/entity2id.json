@@ -1,0 +1,19 @@
+{
+    "B-AMOUNT": 0,
+    "B-DURATION": 1,
+    "B-FIN_METRIC": 2,
+    "B-FREQUENCY": 3,
+    "B-INVESTMENT_TYPE": 4,
+    "B-ORG": 5,
+    "B-PERCENTAGE": 6,
+    "B-RISK_PROFILE": 7,
+    "B-START_DATE": 8,
+    "I-AMOUNT": 9,
+    "I-DURATION": 10,
+    "I-FREQUENCY": 11,
+    "I-INVESTMENT_TYPE": 12,
+    "I-ORG": 13,
+    "I-RISK_PROFILE": 14,
+    "I-START_DATE": 15,
+    "O": 16
+}

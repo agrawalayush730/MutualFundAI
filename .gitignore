@@ -1,0 +1,49 @@
+# === Model Artifacts ===
+*.pt
+*.safetensors
+*.ckpt
+*.bin
+*.onnx
+
+# === Checkpoints & Tokenizers ===
+*/checkpoint-*/
+*/tokenizer_config.json
+*/vocab.txt
+*/special_tokens_map.json
+
+# === Datasets & Intermediate Data ===
+*.csv
+*.tsv
+*.jsonl
+*.npy
+*.pkl
+*.joblib
+*.parquet
+
+# === Logs & Debug Output ===
+*.log
+
+# === Python Cache ===
+__pycache__/
+*.py[cod]
+
+# === Virtual Environments ===
+venv/
+.env
+.venv/
+
+# === System Files ===
+.DS_Store
+Thumbs.db
+
+# === IDE/Editor Files ===
+.vscode/
+.idea/
+
+# === Jupyter Notebook Checkpoints ===
+.ipynb_checkpoints/
+
+# === Frontend Build or Cache ===
+frontend/__pycache__/
+sip_service/__pycache__/
+Fast_Api_/__pycache__/

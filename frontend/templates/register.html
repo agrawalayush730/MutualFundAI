@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <style>
+        body {
+            background-color: #f9fafb;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #1f2937;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #059669;
+        }
+
+        .error {
+            color: red;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        #responseMessage {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>User Registration</h2>
+        <form id="registerForm">
+            <input type="text" id="name" placeholder="Name" required />
+            <div id="nameError" class="error"></div>
+
+            <input type="email" id="email" placeholder="Email" required />
+            <div id="emailError" class="error"></div>
+
+            <input type="password" id="password" placeholder="Password" required />
+            <div id="passwordError" class="error"></div>
+
+            <button type="submit">Register</button>
+            <p id="responseMessage"></p>
+        </form>
+    </div>
+
+    <script>
+        function validateRegister(name, email, password) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            let isValid = true;
+
+            document.getElementById("nameError").innerText = "";
+            document.getElementById("emailError").innerText = "";
+            document.getElementById("passwordError").innerText = "";
+
+            if (name.trim().length < 3) {
+                document.getElementById("nameError").innerText = "Name must be at least 3 characters long.";
+                isValid = false;
+            }
+
+            if (!emailRegex.test(email)) {
+                document.getElementById("emailError").innerText = "Invalid email format.";
+                isValid = false;
+            }
+
+            if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+                document.getElementById("passwordError").innerText = "Password must be at least 8 characters long and contain both letters and numbers.";
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        const form = document.getElementById("registerForm");
+        const messageDisplay = document.getElementById("responseMessage");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value.trim();
+            const rawEmail = document.getElementById("email").value;
+            const cleanedEmail = rawEmail.replace(/[\u200B-\u200D\uFEFF\s]/g, "").toLowerCase();
+            const password = document.getElementById("password").value.trim();
+
+            if (!validateRegister(name, cleanedEmail, password)) return;
+
+            try {
+                const response = await fetch("http://127.0.0.1:8001/register/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ name, email: cleanedEmail, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageDisplay.style.color = "green";
+                    messageDisplay.textContent = result.message || "✅ Registration successful!";
+                    form.reset();
+                } else {
+                    messageDisplay.style.color = "red";
+                    messageDisplay.textContent = result.detail || "❌ Registration failed.";
+                }
+            } catch (error) {
+                messageDisplay.style.color = "red";
+                messageDisplay.textContent = "⚠️ Error connecting to the server.";
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

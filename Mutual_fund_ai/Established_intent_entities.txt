@@ -1,0 +1,5 @@
+intent : get_nav, buy_fund, compare_funds, get_returns, risk_profile_funds, best_funds, exit_load_query, create_sip
+
+Entity :B-ORG / I-ORG, B-FIN_METRIC / I-FIN_METRIC, B-PERCENTAGE / I-PERCENTAGE, B-DURATION / I-DURATION, 
+B-RISK_PROFILE / I-RISK_PROFILE, B-AMOUNT / I-AMOUNT, B-INVESTMENT_TYPE / I-INVESTMENT_TYPE, O, B-START_DATE/I-START_DATE,
+B-DURATION/I-DURATION, B-FREQUENCY/I-FREQUENCY
