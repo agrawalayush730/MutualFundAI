@@ -86,7 +86,7 @@ uvicorn sip_main:app --reload --port 8002
 ### 🌐 Frontend (port 8000)
 ```bash
 cd frontend
-python3 -m http.server 8000
+uvicorn myshow:app
 ```
 
 ---
